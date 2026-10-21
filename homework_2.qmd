@@ -13,6 +13,9 @@ execute:
 ---
 
 ```{r}
+install.packages("gt")
+```
+```{r}
 # Library of Packages
 library(tidyverse)
 library(sf)
@@ -20,6 +23,7 @@ library(here)
 library(stars)
 library(tmap)
 library(quarto)
+library(gt)
 ```
 # Part 1: Legacy of redlining in current environmental (in)justice
 Your first task is to explore historical redlining in Los Angeles and its legacy on present-day environmental justice.
@@ -45,6 +49,16 @@ mi_la <- sf::st_read(here::here(
   "mapping-inequality",
   "mapping-inequality-los-angeles.json"
 ))
+
+# Transfrorming mapping inequality CRS
+mi_la_transform <- st_transform(mi_la, crs = st_crs(la_co))
+
+# Checking for matching CRS
+if (st_crs(la_co) == st_crs(mi_la_transform)) {
+  print('Match')
+} else {
+  warning('NOT A MATCH')
+}
 ```
 
 1. Create a map of historical redlining neighborhoods, including:
@@ -90,7 +104,18 @@ tm_shape(mi_la) + # HOLC polygons
  - Hint: The HOLC data contains the grades and the EJScreen data contains the census blocks, so you will need to combine the data spatially before doing summary statistics. Once you combine and no longer need the geometries, you can use st_drop_geometry().
 
 ```{r}
-tibble()
+percent_block_grade <- st_join(la_co, mi_la_transform) |>
+  st_drop_geometry() |>
+  count(grade) |>
+  mutate(pct_grade = round(n / sum(n) * 100), 4) |>
+  select(-n) |>
+  rename(Grade = grade, Percent = pct_grade)
+
+percent_block_grade |>
+  gt() |>
+  tab_header(
+    title = 'Percent Census Blocks with each HOLC Grade'
+  )
 ```
 
 3. Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables in a single visualization or look at a single variable per plot):
@@ -99,6 +124,9 @@ tibble()
  - percentile for low life expectancy
  - Use ggplot for your visualizations! You will first need to calculate mean of each variable grouped by HOLC grade.
 
+```{r}
+
+```
 
 4. Write a brief paragraph reflecting on these results
  - Interpret the patterns you observe in your results
