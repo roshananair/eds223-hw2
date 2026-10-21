@@ -59,6 +59,9 @@ if (st_crs(la_co) == st_crs(mi_la_transform)) {
 } else {
   warning('NOT A MATCH')
 }
+
+# Joining mapping inequality and LA EJScreen
+joined_la <- st_join(la_co, mi_la_transform)
 ```
 
 1. Create a map of historical redlining neighborhoods, including:
@@ -104,7 +107,7 @@ tm_shape(mi_la) + # HOLC polygons
  - Hint: The HOLC data contains the grades and the EJScreen data contains the census blocks, so you will need to combine the data spatially before doing summary statistics. Once you combine and no longer need the geometries, you can use st_drop_geometry().
 
 ```{r}
-percent_block_grade <- st_join(la_co, mi_la_transform) |>
+percent_block_grade <- joined_la |>
   st_drop_geometry() |>
   count(grade) |>
   mutate(pct_grade = round(n / sum(n) * 100), 4) |>
@@ -125,7 +128,26 @@ percent_block_grade |>
  - Use ggplot for your visualizations! You will first need to calculate mean of each variable grouped by HOLC grade.
 
 ```{r}
+summary_la <- joined_la |>
+  group_by(grade) |>
+  drop_na(LOWINCPCT, P_PM25, P_LIFEEXPPCT) |>
+  summarise(
+    avg_lowinc = mean(LOWINCPCT),
+    avg_pm25 = mean(P_PM25),
+    avg_lifexpv = mean(P_LIFEEXPPCT)
+  )
+```
 
+```{r}
+summary_la |>
+  ggplot(aes(x = grade, y = avg_lowinc, fill = grade)) +
+  geom_col()
+summary_la |>
+  ggplot(aes(x = grade, y = avg_pm25, fill = grade)) +
+  geom_col()
+summary_la |>
+  ggplot(aes(x = grade, y = avg_lifexpv, fill = grade)) +
+  geom_col()
 ```
 
 4. Write a brief paragraph reflecting on these results
