@@ -14,6 +14,7 @@ execute:
 
 ```{r}
 install.packages("gt")
+install.packages("cowplot")
 ```
 ```{r}
 # Library of Packages
@@ -24,6 +25,7 @@ library(stars)
 library(tmap)
 library(quarto)
 library(gt)
+library(cowplot)
 ```
 # Part 1: Legacy of redlining in current environmental (in)justice
 Your first task is to explore historical redlining in Los Angeles and its legacy on present-day environmental justice.
@@ -139,20 +141,35 @@ summary_la <- joined_la |>
 ```
 
 ```{r}
-summary_la |>
+inc <- summary_la |>
   ggplot(aes(x = grade, y = avg_lowinc, fill = grade)) +
   geom_col()
-summary_la |>
+pm <- summary_la |>
   ggplot(aes(x = grade, y = avg_pm25, fill = grade)) +
   geom_col()
-summary_la |>
+lex <- summary_la |>
   ggplot(aes(x = grade, y = avg_lifexpv, fill = grade)) +
   geom_col()
+
+current_conditions_summary <- plot_grid(
+  inc,
+  pm,
+  lex,
+  labels = c(
+    'Mean Low Income % by Grade',
+    'Mean Percentile PM 2.5 by Grade',
+    'Mean Percentile Low Life Expectancy by Grade'
+  )
+)
+
+current_conditions_summary
 ```
 
 4. Write a brief paragraph reflecting on these results
  - Interpret the patterns you observe in your results
  - Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
+
+**With each variable describing current conditions, there is a rise in mean values from HOLC grades A to D, where grade D has the highest mean low income percentage, PM 2.5 percentile, and low life expectance percentile, and grade A has the lowest. The means for low income percentage and low life expectance percentile are larger for census blocks in LA County without a grade than those in grades A and B, however the mean for PM 2.5 percentile is lowest in census blocks with now grade designation. The mean PM 2.5 percentile is likely the lowest in ungraded census blocks, as the majority of graded blocks are located within the urbal sprawl of Los Angeles, whereas there are large numbers of ungraded blocks in less-populated, less dense areas of the county. As a census block is graded more poorly and redlined, the higher the census blocks current condition marker variables.**
 
  # Part 2: Legacy of redlining in pedstrian and bike accidents
  Your second task is to explore the legacy of historical redlining in Los Angeles on the report of pedestrian and bike crashes/ fatalities.
