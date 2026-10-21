@@ -1,0 +1,121 @@
+---
+title: "Exploring Patterns of Environmental Justice"
+subtitle: "EDS 223 Homework 2"
+author: "Roshan Andres Nair"
+format: 
+  pdf:
+    fig-width: 9
+    fig-height: 6
+    fig-pos: "H"
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+# Library of Packages
+library(tidyverse)
+library(sf)
+library(here)
+library(stars)
+library(tmap)
+library(quarto)
+```
+# Part 1: Legacy of redlining in current environmental (in)justice
+Your first task is to explore historical redlining in Los Angeles and its legacy on present-day environmental justice.
+
+### Description
+For this assignment, you must complete the following:
+
+```{r}
+# Read in geodatabase of EJScreen data at the Census Block Group level
+ejscreen <- sf::st_read(here::here(
+  "data",
+  "ejscreen",
+  "EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb"
+))
+
+# Filter to Los Angeles County, CA
+la_co <- ejscreen |>
+  dplyr::filter(CNTY_NAME %in% c("Los Angeles County"))
+
+# Read in mapping inequality for Los Angeles
+mi_la <- sf::st_read(here::here(
+  "data",
+  "mapping-inequality",
+  "mapping-inequality-los-angeles.json"
+))
+```
+
+1. Create a map of historical redlining neighborhoods, including:
+ - neighborhoods colored by HOLC grade
+ - an appropriate base map
+ - a clear title and legend
+
+```{r}
+# Mapping historically redlined neighbourhoods (HOLC Grade by Census Block Group)
+
+# Setting colors for grade levels
+grade_colours <- c('#5DAE8B', '#466C95', '#F6F49D', '#FF7676')
+
+# Mapping
+tm_shape(mi_la) + # HOLC polygons
+  tm_polygons(
+    fill = 'grade',
+    fill.scale = tm_scale_categorical(
+      labels = c('A - Best', 'B - Desirable', 'C - Declining', 'D - Hazardous'),
+      values = grade_colours
+    ),
+    fill.legend = tm_legend(
+      title = "Home Owners' Loan Corporation (HOLC) Grade",
+      orientation = 'landscape',
+      width = 30
+    )
+  ) +
+  tm_scalebar(position = c('left', 'bottom')) +
+  tm_compass() +
+  tm_title(
+    "Home Owners' Loan Corporation (HOLC) Grades by Census Block Group \n Los Angeles County, California, USA",
+    size = 1.25,
+    fontface = 'bold'
+  ) +
+  tm_layout(component.autoscale = FALSE) +
+  tm_shape(la_co) + # LA County basemap
+  tm_basemap('Esri.WorldGrayCanvas')
+```
+
+2. Create a table summarizing:
+ - the percentage of census block groups that fall within each HOLC grade
+ - Also include the percent of census black groups that don’t fall within a HOLC grade in your table
+ - Hint: The HOLC data contains the grades and the EJScreen data contains the census blocks, so you will need to combine the data spatially before doing summary statistics. Once you combine and no longer need the geometries, you can use st_drop_geometry().
+
+```{r}
+tibble()
+```
+
+3. Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables in a single visualization or look at a single variable per plot):
+ - % low income
+ - percentile for Particulate Matter 2.5
+ - percentile for low life expectancy
+ - Use ggplot for your visualizations! You will first need to calculate mean of each variable grouped by HOLC grade.
+
+
+4. Write a brief paragraph reflecting on these results
+ - Interpret the patterns you observe in your results
+ - Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
+
+ # Part 2: Legacy of redlining in pedstrian and bike accidents
+ Your second task is to explore the legacy of historical redlining in Los Angeles on the report of pedestrian and bike crashes/ fatalities.
+
+### Description
+For this assignment, you must produce the following based on observations from 2020-2025:
+
+1. A figure summarizing the percent of observations within redlined neighborhoods within each HOLC grade
+
+Create a visualizations that shows:
+
+ - The percentage of bike and pedestrian crashes and fatalities within each HOLC grade
+ - Include an appropiate title, axis labels, and legend
+ - Hints: Make sure to filter for bike and pedestrian crahes(PEDESTRIAN_ACCIDENT and BICYCLE_ACCIDENT). Look at the difference in NAs between POINT_X/POINT_Y and LONGITUDE/LATITUDE before you decide which to use. Ensure the SWITRS data and HOLC dataset have matching CRS’, then perform a spatial join to assign each crash to a corresponding HOLC grade.
+
+ 
