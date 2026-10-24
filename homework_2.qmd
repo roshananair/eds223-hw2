@@ -13,10 +13,6 @@ execute:
 ---
 
 ```{r}
-install.packages("gt")
-install.packages("cowplot")
-```
-```{r}
 # Library of Packages
 library(tidyverse)
 library(sf)
@@ -27,11 +23,14 @@ library(quarto)
 library(gt)
 library(cowplot)
 ```
-# Part 1: Legacy of redlining in current environmental (in)justice
-Your first task is to explore historical redlining in Los Angeles and its legacy on present-day environmental justice.
 
-### Description
-For this assignment, you must complete the following:
+```{r}
+# Set Theme
+theme_set(theme_bw())
+```
+
+# Part 1: Legacy of redlining in current environmental (in)justice
+Exploration of historical redlining in Los Angeles and its legacy on present-day environmental justice.
 
 ```{r}
 # Read in geodatabase of EJScreen data at the Census Block Group level
@@ -44,14 +43,21 @@ ejscreen <- sf::st_read(here::here(
 # Filter to Los Angeles County, CA
 la_co <- ejscreen |>
   dplyr::filter(CNTY_NAME %in% c("Los Angeles County"))
+```
 
-# Read in mapping inequality for Los Angeles
+```{r}
+# Read in mapping inequality data for Los Angeles
 mi_la <- sf::st_read(here::here(
   "data",
   "mapping-inequality",
   "mapping-inequality-los-angeles.json"
 ))
 
+# Fixing HOLC geometries
+holc <- st_make_valid(mi_la)
+```
+
+```{r}
 # Transfrorming mapping inequality CRS
 mi_la_transform <- st_transform(mi_la, crs = st_crs(la_co))
 
@@ -66,29 +72,27 @@ if (st_crs(la_co) == st_crs(mi_la_transform)) {
 joined_la <- st_join(la_co, mi_la_transform)
 ```
 
-1. Create a map of historical redlining neighborhoods, including:
- - neighborhoods colored by HOLC grade
- - an appropriate base map
- - a clear title and legend
+1. Mapping of historical redlining neighborhoods:
+
+```{r}
+# Setting colors for HOLC grade levels and text for HOLC grade labels
+grade_colours <- c('#5DAE8B', '#466C95', '#F6F49D', '#FF7676', '#9b9090')
+grade_labels <- c('A - Best', 'B - Desirable', 'C - Declining', 'D - Hazardous')
+```
 
 ```{r}
 # Mapping historically redlined neighbourhoods (HOLC Grade by Census Block Group)
-
-# Setting colors for grade levels
-grade_colours <- c('#5DAE8B', '#466C95', '#F6F49D', '#FF7676')
-
-# Mapping
 tm_shape(mi_la) + # HOLC polygons
   tm_polygons(
     fill = 'grade',
     fill.scale = tm_scale_categorical(
-      labels = c('A - Best', 'B - Desirable', 'C - Declining', 'D - Hazardous'),
+      labels = grade_labels,
       values = grade_colours
     ),
     fill.legend = tm_legend(
       title = "Home Owners' Loan Corporation (HOLC) Grade",
       orientation = 'landscape',
-      width = 30
+      width = 50
     )
   ) +
   tm_scalebar(position = c('left', 'bottom')) +
@@ -103,19 +107,18 @@ tm_shape(mi_la) + # HOLC polygons
   tm_basemap('Esri.WorldGrayCanvas')
 ```
 
-2. Create a table summarizing:
- - the percentage of census block groups that fall within each HOLC grade
- - Also include the percent of census black groups that don’t fall within a HOLC grade in your table
- - Hint: The HOLC data contains the grades and the EJScreen data contains the census blocks, so you will need to combine the data spatially before doing summary statistics. Once you combine and no longer need the geometries, you can use st_drop_geometry().
+2. Table summarizing percentage of census block groups that fall within each HOLC grade:
 
 ```{r}
+# Creating dataframe for percent of block groups in each HOLC grade
 percent_block_grade <- joined_la |>
   st_drop_geometry() |>
   count(grade) |>
-  mutate(pct_grade = round(n / sum(n) * 100), 4) |>
+  mutate(pct_grade = round(n / sum(n) * 100, 2)) |>
   select(-n) |>
   rename(Grade = grade, Percent = pct_grade)
 
+# Displaying dataframe as a table
 percent_block_grade |>
   gt() |>
   tab_header(
@@ -123,13 +126,10 @@ percent_block_grade |>
   )
 ```
 
-3. Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables in a single visualization or look at a single variable per plot):
- - % low income
- - percentile for Particulate Matter 2.5
- - percentile for low life expectancy
- - Use ggplot for your visualizations! You will first need to calculate mean of each variable grouped by HOLC grade.
+3. Visualization summarizing current conditions within HOLC grades using the mean of the following variables % low income, percentile for Particulate Matter 2.5, and percentile for low life expectancy:
 
 ```{r}
+# Creating summary dataframe containing means of each current condition variable by grade
 summary_la <- joined_la |>
   group_by(grade) |>
   drop_na(LOWINCPCT, P_PM25, P_LIFEEXPPCT) |>
@@ -141,48 +141,154 @@ summary_la <- joined_la |>
 ```
 
 ```{r}
+# Plotting summary of means of each current condition variable by grade
+
+# Create fake plot for legend
+mock_plot <- summary_la |>
+  ggplot(aes(x = grade, y = avg_lifexpv, fill = grade)) +
+  geom_col() +
+  scale_color_manual(
+    name = 'HOLC Grade',
+    values = grade_colours,
+    labels = grade_labels
+  ) +
+  scale_fill_manual(
+    name = 'HOLC Grade',
+    values = grade_colours,
+    labels = grade_labels
+  ) +
+  theme(
+    legend.title = element_text(size = 12, face = 'bold'),
+    legend.text = element_text(size = 10),
+    legend.key.size = unit(2.0, 'cm')
+  )
+
+# Create joint legend using fake plot
+legend <- get_legend(mock_plot)
+
+# Low income plot
 inc <- summary_la |>
   ggplot(aes(x = grade, y = avg_lowinc, fill = grade)) +
-  geom_col()
+  geom_col() +
+  labs(
+    title = 'Mean Low Income % by Grade',
+    x = 'HOLC Grade',
+    y = 'Mean Low Income %'
+  ) +
+  scale_fill_manual(values = grade_colours) +
+  theme(legend.position = 'none')
+
+# PM 2.5 plot
 pm <- summary_la |>
   ggplot(aes(x = grade, y = avg_pm25, fill = grade)) +
-  geom_col()
+  geom_col() +
+  labs(
+    title = 'Mean PM 2.5 Percentile by Grade',
+    x = 'HOLC Grade',
+    y = 'Mean PM 2.5 Percentile'
+  ) +
+  scale_fill_manual(values = grade_colours) +
+  theme(legend.position = 'none')
+
+# Left expectancy plot
 lex <- summary_la |>
   ggplot(aes(x = grade, y = avg_lifexpv, fill = grade)) +
-  geom_col()
+  geom_col() +
+  labs(
+    title = 'Mean Low Life Expectancy Percentile by Grade',
+    x = 'HOLC Grade',
+    y = 'Mean Low Life Expectancy Percentile'
+  ) +
+  scale_fill_manual(values = grade_colours) +
+  theme(legend.position = 'none')
 
-current_conditions_summary <- plot_grid(
+# Joining 3 plots and legend
+current_conditions <- plot_grid(
   inc,
   pm,
   lex,
-  labels = c(
-    'Mean Low Income % by Grade',
-    'Mean Percentile PM 2.5 by Grade',
-    'Mean Percentile Low Life Expectancy by Grade'
-  )
+  legend
 )
 
+# Plot title
+title <- ggdraw() +
+  draw_label(
+    'Means of Current Conditions by HOLC Grade',
+    fontface = 'bold',
+    size = 20,
+    hjust = 0.5
+  )
+
+# Adding title to current conditions plot, changing relative sizes
+current_conditions_summary <- plot_grid(
+  title,
+  current_conditions,
+  ncol = 1,
+  rel_heights = c(0.1, 1)
+)
+
+# Display summary plot
 current_conditions_summary
 ```
 
-4. Write a brief paragraph reflecting on these results
- - Interpret the patterns you observe in your results
- - Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
+4. Reflecting on the patterns observed in results:
 
-**With each variable describing current conditions, there is a rise in mean values from HOLC grades A to D, where grade D has the highest mean low income percentage, PM 2.5 percentile, and low life expectance percentile, and grade A has the lowest. The means for low income percentage and low life expectance percentile are larger for census blocks in LA County without a grade than those in grades A and B, however the mean for PM 2.5 percentile is lowest in census blocks with now grade designation. The mean PM 2.5 percentile is likely the lowest in ungraded census blocks, as the majority of graded blocks are located within the urbal sprawl of Los Angeles, whereas there are large numbers of ungraded blocks in less-populated, less dense areas of the county. As a census block is graded more poorly and redlined, the higher the census blocks current condition marker variables.**
+**With each variable describing current conditions, there is a rise in mean values from HOLC grades A to D, where grade D has the highest mean low income percentage, PM 2.5 percentile, and low life expectance percentile, and grade A has the lowest. The means for low income percentage and low life expectance percentile are larger for census blocks in LA County without a grade than those in grades A and B, however the mean for PM 2.5 percentile is lowest in census blocks with no grade designation. The mean PM 2.5 percentile is likely the lowest in ungraded census blocks, as the majority of graded blocks are located within the relatively denser urban sprawl of Los Angeles, whereas there are large numbers of ungraded blocks in less-populated, less dense areas of the county. As a census block is graded more poorly and redlined, the higher the census blocks current condition marker variables. Therefore, historically redlined neighbourhoods are experiencing the effects in the present with reduced life expectancy, lower incomes, and higher PM 2.5.**
 
  # Part 2: Legacy of redlining in pedstrian and bike accidents
- Your second task is to explore the legacy of historical redlining in Los Angeles on the report of pedestrian and bike crashes/ fatalities.
+ Exploration of the legacy of historical redlining in Los Angeles on the report of pedestrian and bike crashes/ fatalities.
 
-### Description
-For this assignment, you must produce the following based on observations from 2020-2025:
+1. Summary of the percent of observations within redlined neighborhoods within each HOLC grade:
 
-1. A figure summarizing the percent of observations within redlined neighborhoods within each HOLC grade
+```{r}
+# Read in data, convert to tibble, drop NA values from coodinate cols, rename coordinate cols, convert to spatial features
+crashes <- read_csv(here::here("data", "SWITRS_LA", "Crashes.csv")) |>
+  as_tibble() |>
+  drop_na(POINT_X, POINT_Y) |>
+  rename(long = POINT_X, lat = POINT_Y) |>
+  st_as_sf(coords = c("long", "lat"), crs = 4326, remove = FALSE)
+```
 
-Create a visualizations that shows:
+ ```{r}
+ # Check that crs match before joining
+ if (st_crs(holc) == st_crs(crashes)) {
+  print('Match')
+} else {
+  warning('NOT A MATCH')
+}
+ ```
 
- - The percentage of bike and pedestrian crashes and fatalities within each HOLC grade
- - Include an appropiate title, axis labels, and legend
- - Hints: Make sure to filter for bike and pedestrian crahes(PEDESTRIAN_ACCIDENT and BICYCLE_ACCIDENT). Look at the difference in NAs between POINT_X/POINT_Y and LONGITUDE/LATITUDE before you decide which to use. Ensure the SWITRS data and HOLC dataset have matching CRS’, then perform a spatial join to assign each crash to a corresponding HOLC grade.
+ ```{r}
+ # Join crashes and holc, drop geometry, filter for bicycle and pedestrian accidents
+crashes_holc <- st_join(holc, crashes, join = st_intersects) |> st_drop_geometry() |> filter(BICYCLE_ACCIDENT == 'Y'| PEDESTRIAN_ACCIDENT == 'Y')
 
- 
+ ```
+
+```{r}
+# Create summary dataframe of accident counts by grade and respective percentages
+crashes_holc_summary <- crashes_holc |>
+  group_by(grade) |>
+  summarise(count = n()) |>
+  mutate(percent = count / sum(count) * 100)
+
+# Display summary df as table
+gt(crashes_holc_summary) |>
+  tab_header(
+    title = 'Accident Counts by HOLC Grade and Percentages'
+  )
+```
+
+```{r}
+# Plotting crash summary
+ggplot(crashes_holc_summary, aes(x = grade, y = percent)) +
+  geom_col(fill = grade_colours) +
+  labs(
+    title = 'Accident Percent by HOLC Grade',
+    x = 'HOLC Grade',
+    y = 'Proportion of Accidents (%)'
+  ) +
+  theme(
+    plot.title = element_text(face = 'bold', size = 20),
+    axis.title = element_text(size = 16)
+  )
+```
