@@ -4,6 +4,10 @@ subtitle: "EDS 223 Homework 2"
 author: "Roshan Andres Nair"
 format: 
   pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
     fig-width: 9
     fig-height: 6
     fig-pos: "H"
@@ -32,13 +36,12 @@ theme_set(theme_bw())
 # Part 1: Legacy of redlining in current environmental (in)justice
 Exploration of historical redlining in Los Angeles and its legacy on present-day environmental justice.
 
-```{r}
+```{r, message = FALSE}
 # Read in geodatabase of EJScreen data at the Census Block Group level
-ejscreen <- sf::st_read(here::here(
-  "data",
-  "ejscreen",
-  "EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb"
-))
+ejscreen <- sf::st_read(
+  "data/ejscreen/EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb",
+  quiet = TRUE
+)
 
 # Filter to Los Angeles County, CA
 la_co <- ejscreen |>
@@ -47,11 +50,10 @@ la_co <- ejscreen |>
 
 ```{r}
 # Read in mapping inequality data for Los Angeles
-mi_la <- sf::st_read(here::here(
-  "data",
-  "mapping-inequality",
-  "mapping-inequality-los-angeles.json"
-))
+mi_la <- sf::st_read(
+  "data/mapping-inequality/mapping-inequality-los-angeles.json",
+  quiet = TRUE
+)
 
 # Fixing HOLC geometries
 holc <- st_make_valid(mi_la)
@@ -160,7 +162,7 @@ mock_plot <- summary_la |>
   theme(
     legend.title = element_text(size = 12, face = 'bold'),
     legend.text = element_text(size = 10),
-    legend.key.size = unit(2.0, 'cm')
+    legend.key.size = unit(0.5, 'cm')
   )
 
 # Create joint legend using fake plot
@@ -235,12 +237,14 @@ current_conditions_summary
 
 **With each variable describing current conditions, there is a rise in mean values from HOLC grades A to D, where grade D has the highest mean low income percentage, PM 2.5 percentile, and low life expectance percentile, and grade A has the lowest. The means for low income percentage and low life expectance percentile are larger for census blocks in LA County without a grade than those in grades A and B, however the mean for PM 2.5 percentile is lowest in census blocks with no grade designation. The mean PM 2.5 percentile is likely the lowest in ungraded census blocks, as the majority of graded blocks are located within the relatively denser urban sprawl of Los Angeles, whereas there are large numbers of ungraded blocks in less-populated, less dense areas of the county. As a census block is graded more poorly and redlined, the higher the census blocks current condition marker variables. Therefore, historically redlined neighbourhoods are experiencing the effects in the present with reduced life expectancy, lower incomes, and higher PM 2.5.**
 
- # Part 2: Legacy of redlining in pedstrian and bike accidents
- Exploration of the legacy of historical redlining in Los Angeles on the report of pedestrian and bike crashes/ fatalities.
+# Part 2: Legacy of redlining in pedstrian and bike accidents
+Exploration of the legacy of historical redlining in Los Angeles on the report of pedestrian and bike crashes/ fatalities.
 
 1. Summary of the percent of observations within redlined neighborhoods within each HOLC grade:
 
 ```{r}
+#| output: asis
+
 # Read in data, convert to tibble, drop NA values from coodinate cols, rename coordinate cols, convert to spatial features
 crashes <- read_csv(here::here("data", "SWITRS_LA", "Crashes.csv")) |>
   as_tibble() |>
@@ -250,7 +254,10 @@ crashes <- read_csv(here::here("data", "SWITRS_LA", "Crashes.csv")) |>
 ```
 
  ```{r}
- # Check that crs match before joining
+#| output: asis
+#| message : false
+
+# Check that crs match before joining
  if (st_crs(holc) == st_crs(crashes)) {
   print('Match')
 } else {
@@ -259,9 +266,10 @@ crashes <- read_csv(here::here("data", "SWITRS_LA", "Crashes.csv")) |>
  ```
 
  ```{r}
- # Join crashes and holc, drop geometry, filter for bicycle and pedestrian accidents
-crashes_holc <- st_join(holc, crashes, join = st_intersects) |> st_drop_geometry() |> filter(BICYCLE_ACCIDENT == 'Y'| PEDESTRIAN_ACCIDENT == 'Y')
+ #| output: asis
 
+# Join crashes and holc, drop geometry, filter for bicycle and pedestrian accidents
+crashes_holc <- st_join(holc, crashes, join = st_intersects) |> st_drop_geometry() |> filter(BICYCLE_ACCIDENT == 'Y'| PEDESTRIAN_ACCIDENT == 'Y')
  ```
 
 ```{r}
