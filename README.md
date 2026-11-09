@@ -1,7 +1,7 @@
-# eds223-hw2: Exploring Patterns of Environmental Justice in Los Angeles County, California
+# eds223-hw2
 Repository for EDS 233 Homework 2: Exploring Patterns of Environmental Justice
 
-## Assessing Suitability for Mariculture on the West (Pacific) Coast of the United States
+## Exploring Patterns of Environmental Justice in Los Angeles County, California
 This repository contains Assignment 2 for EDS 223 Geospatial Analysis & Remote Sensing. First, this assignment looks at the legacy of redlining in current environmental justice, specifically looking at patterns of people with low income, PM 2.5, and low life expectancy across Home Owners' Loan Corporation (HOLC) grades (redlined neightbourhoods). Then, it looks at the legacy of redlining on pedestrian and bicycle accidents, by looking at proportions of accidents occuring across HOLC grades.
 
 ## Repository Contents
