@@ -1,11 +1,11 @@
-# eds223-hw2
+# eds223-hw2: Exploring Patterns of Environmental Justice in Los Angeles County, California
 Repository for EDS 233 Homework 2: Exploring Patterns of Environmental Justice
 
 ## Assessing Suitability for Mariculture on the West (Pacific) Coast of the United States
 This repository contains Assignment 2 for EDS 223 Geospatial Analysis & Remote Sensing. First, this assignment looks at the legacy of redlining in current environmental justice, specifically looking at patterns of people with low income, PM 2.5, and low life expectancy across Home Owners' Loan Corporation (HOLC) grades (redlined neightbourhoods). Then, it looks at the legacy of redlining on pedestrian and bicycle accidents, by looking at proportions of accidents occuring across HOLC grades.
 
 ## Repository Contents
- - **data/** 
+ - **data/** (Ignored)
      - **data/ejscreen**
         - data/ejscreen/EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb
              - GeoDatabase containing EJScreen data
@@ -21,6 +21,11 @@ This repository contains Assignment 2 for EDS 223 Geospatial Analysis & Remote S
              - Data on crashes in Los Angeles County from the Statewide Integrated Traffice Records System (SWITRS) database
  - **homework_2.qmd** 
      - Contains code to map census block groups by HOLC grade, summarise percent of block groups in each HOLC grade, visualise people with low income, PM 2.5, and low life expectancy by HOLC grade, and show proportions of pedestrian and bicycle accidents by HOLC grade.
+
+## Data Accessibility
+ - EJScreen Dataset from the U.S. Environmental Protection Agency (EPA) is no longer supported by the EPA, and data is not available for [download](https://www.epa.gov/ejscreen/download-ejscreen-data) from the official website.
+ - HOLC Redlining Dataset from the [Digital Scholarship Lab](https://dsl.richmond.edu/) at the University of Richmond is available from the [Mapping Inequality](https://dsl.richmond.edu/panorama/redlining/#loc=5/39.1/-94.58) Project.
+ - Bike and Pedestrial Crash Report Dataset from the Safe Transportation Research and Education Center (SafeTREC) is available from the [Transportation Injury Mapping System (TIMS)](https://tims.berkeley.edu/).
 
 ## Contributors 
 [Roshan Andres Nair](https://github.com/roshananair)
