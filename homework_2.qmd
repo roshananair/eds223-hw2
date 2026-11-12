@@ -106,7 +106,7 @@ tm_shape(mi_la) + # HOLC polygons
   ) +
   tm_layout(component.autoscale = FALSE) +
   tm_shape(la_co) + # LA County basemap
-  tm_basemap('Esri.WorldGrayCanvas')
+  tm_basemap('OpenStreetMap')
 ```
 
 2. Table summarizing percentage of census block groups that fall within each HOLC grade:
